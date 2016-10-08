@@ -24,20 +24,51 @@
 
 (s/def ::item (s/alt
                 :hex-escaped-char ::hex-escaped-char
+                :backslash ::backslash
                 :quote ::quote
                 :plain-char char?))
-(s/def ::string (s/* (s/cat :item ::item)))
+(s/def ::list-line (s/* (s/cat :item ::item)))
+
+(defn hex-escaped-char->char [hex-escaped-char]
+  (-> (str "0x" (hex-escaped-char :char-1) (hex-escaped-char :char-2))
+      edn/read-string
+      char))
+
+(defn process-list-line
+  "Takes a ::list-line, returns a regular old string."
+  [list-line]
+  (let [handle-line-item (fn [item]
+                           (let [[item-type item-contents] (first (vals item))]
+                             (if (= item-type :hex-escaped-char)
+                               (hex-escaped-char->char item-contents)
+                               item-contents)))]
+    (apply str (map handle-line-item list-line))))
+
+(s/fdef process-list-line
+  :args (:list-line ::list-line))
 
 (comment
   (s/exercise ::hex-escaped-char 10)
 
-  (s/conform ::string (vec "\"\\x27\""))
+  (->> "\"aaa\"aaa\""
+       vec
+       (s/conform ::list-line)
+       process-list-line)
 
-  (s/conform ::string (first input))
 
+  (hex-escaped-char->char
+    {:backslash \\, :x \x, :char-1 \8, :char-2 \b}
+    )
 
-  (vec (first input))
-  (edn/read-string (first input))
+  (process-list-line (s/conform ::list-line (vec (first input))))
+
+  (first input)
+
+  (val (ffirst
+         (s/conform ::list-line (vec "\"\\x27\""))))
+
+  (s/conform ::list-line (vec (first input)))
+
 
   (identity 0x27)
   (char 0x27)
