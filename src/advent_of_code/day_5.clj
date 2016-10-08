@@ -20,25 +20,60 @@
   (let [bad-substrings #{#"ab" #"cd" #"pq" #"xy"}]
     (some #(re-find % a-str) bad-substrings)))
 
-(defn nice? [a-str]
+(defn part-1-nice? [a-str]
   (and (>= (count (filter vowels a-str))
-          3)
+           3)
        (contains-adjoining-dupe? a-str)
        (not (contains-bad-substring? a-str))))
 
-(s/fdef nice?
+(s/fdef part-1-nice?
   :args (s/cat :a-str string?)
   :ret boolean?)
 
-(stest/instrument `nice?)
+(def part-1-nice-strings
+  (filter part-1-nice? input))
 
-(def nice-strings
-  (filter nice? input))
+(defn find-non-overlapping-pairs
+  [a-str]
+  ((reduce
+     (fn [state curr-char]
+       (if (= (state :last-char) curr-char)
+         {:instances (conj (state :instances)
+                           (repeat 2 curr-char))
+          :last-char nil}
+         (assoc state :last-char curr-char)))
+
+     {:instances []
+      :last-char nil}
+
+     a-str) :instances))
+
+(s/def ::pair (s/tuple char? char?))
+
+(s/fdef find-non-overlapping-pairs
+  :args (s/cat :a-str string?)
+  :ret (s/coll-of ::pair))
+
+(defn repetitions-with-one-in-the-middle [a-str])
+
+(defn part-2-nice? [a-str]
+  (and
+    (some #(> % 1)
+          (frequencies (find-non-overlapping-pairs a-str)))
+
+    )
+
+  )
+
+(stest/instrument)
 
 (comment
-  (count nice-strings)
+  (count part-1-nice-strings)
 
   (nice?)
+
+  (frequencies
+    (find-non-overlapping-instances-of-pair "jfajjiewofejioawaajefiwofewooojwefjwejjwe"))
 
   (filter vowels "ajiowfefawiofaweje")
 
