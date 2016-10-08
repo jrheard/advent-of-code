@@ -47,8 +47,8 @@
                [route (route-cost route)])
              (permutations all-locations))))
 
-(def min-cost-route
-  (apply min-key
+(def max-cost-route
+  (apply max-key
          (fn [[_ state]]
            (state :cost))
          all-routes))
@@ -56,7 +56,7 @@
 (comment
   all-routes
 
-  min-cost-route
+  max-cost-route
 
   (rest all-locations)
   (as-> "London to Dublin = 464" $
