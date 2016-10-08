@@ -50,7 +50,7 @@
 
   (-> fast-look-and-say
       (iterate start)
-      (nth 40)
+      (nth 50)
       count
       )
 
