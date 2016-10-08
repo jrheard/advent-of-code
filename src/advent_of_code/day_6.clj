@@ -1,13 +1,8 @@
 (ns advent-of-code.day-6
   (:require [clojure.spec :as s]
             [clojure.spec.test :as stest]
+            [clojure.math.combinatorics :refer [cartesian-product]]
             [clojure.string :refer [split join]]))
-
-
-#_(def lights
-    (to-array-2d (for [_ (range 1000)]
-                   (for [_ (range 1000)]
-                     0))))
 
 (s/def ::x nat-int?)
 (s/def ::y nat-int?)
@@ -43,18 +38,36 @@
                      (inc (-> instruction ::end ::y)))]
       (case (instruction ::instruction-type)
         :turn-on (aset arr i j 1)
-        :turn-off (aset arr i j 1)
+        :turn-off (aset arr i j 0)
         :toggle (let [new-val (if (= (aget arr i j) 0)
                                 1
                                 0)]
                   (aset arr i j new-val))))))
 
-#_(doseq [instruction instructions]
-    (process-instruction arr instruction))
+(defn part-1
+  []
+  (let [lights (to-array-2d (for [_ (range 1000)]
+                              (for [_ (range 1000)]
+                                0)))]
+
+    (doseq [instruction instructions]
+      (process-instruction lights instruction))
+
+    (count (filter (fn [[i j]]
+                     (= (aget lights i j)
+                        1))
+                   (cartesian-product (range 1000) (range 1000))))))
 
 (comment
+  (part-1)
 
-  (process-instruction lights  (first instructions))
+  (process-instruction lights (first instructions))
+
+  (cartesian-product (range 10) (range 10))
+
+  (juxt (range 10) (range 10))
+
+  (map vector (range 10) (range 10))
 
   (take 20 instructions)
 
