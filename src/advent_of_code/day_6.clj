@@ -36,30 +36,32 @@
                    (inc (-> instruction ::end ::x)))]
     (doseq [j (range (-> instruction ::start ::y)
                      (inc (-> instruction ::end ::y)))]
-      (case (instruction ::instruction-type)
-        :turn-on (aset arr i j 1)
-        :turn-off (aset arr i j 0)
-        :toggle (let [new-val (if (= (aget arr i j) 0)
-                                1
-                                0)]
-                  (aset arr i j new-val))))))
+      (let [light-val (aget arr i j)]
+        (case (instruction ::instruction-type)
+          :turn-on (aset arr i j (inc light-val))
+          :turn-off (aset arr i j (if (> light-val 0)
+                                    (dec light-val)
+                                    0))
+          :toggle (aset arr i j (+ light-val 2)))))))
 
-(defn part-1
+(defn answer
   []
   (let [lights (to-array-2d (for [_ (range 1000)]
                               (for [_ (range 1000)]
                                 0)))]
 
-    (doseq [instruction instructions]
+    (doseq [[i instruction] (map-indexed vector instructions)]
+      (print "processing" i instruction)
       (process-instruction lights instruction))
 
-    (count (filter (fn [[i j]]
-                     (= (aget lights i j)
-                        1))
+    (apply + (keep (fn [[i j]]
+                     (let [brightness (aget lights i j)]
+                       (when (> brightness 0)
+                         brightness)))
                    (cartesian-product (range 1000) (range 1000))))))
 
 (comment
-  (part-1)
+  (answer)
 
   (process-instruction lights (first instructions))
 
