@@ -41,6 +41,22 @@
 
 (def instructions (map parse-instruction raw-instructions))
 
+(defn -resolve-signal [val-or-identifier wire-signals]
+  (cond
+    (number? val-or-identifier) val-or-identifier
+    (contains? wire-signals val-or-identifier) (wire-signals val-or-identifier)))
+
+(defmulti run-instruction
+          (fn
+            [instruction wire-signals]
+            (instruction ::operation)))
+
+(defmethod run-instruction :identity
+  [instruction wire-signals]
+  (-resolve-signal (first (instruction ::inputs)) wire-signals))
+
+(defmethod run-instruction :)
+
 (defn follow-instructions
   [instructions]
   (loop [wire-signals {}
@@ -51,6 +67,7 @@
     (if (seq instructions-ready-to-follow)
       (let [instruction (first instructions-ready-to-follow)
             output-value (run-instruction instruction wire-signals)
+            wire-signals (assoc wire-signals (instruction ::output) output-value)
             instructions-ready-to-follow (apply conj
                                                 instructions-ready-to-follow
                                                 (filter (fn [instruction]
@@ -59,13 +76,13 @@
                                                                  (contains? wire-signals %))
                                                             (instruction ::inputs)))
                                                         instructions-with-unresolved-inputs))]
-
-        (recur (assoc wire-signals (instruction ::output) output-value)
+        (recur wire-signals
                instructions-ready-to-follow
                (difference instructions-with-unresolved-inputs instructions-ready-to-follow)))
       wire-signals)))
 
 (comment
+  (+ 65536 (bit-not 123))
 
   (take 10 instructions)
 
