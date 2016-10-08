@@ -15,31 +15,15 @@
                                  :char-2 char?))
 
 (s/def ::item (s/alt :hex-escaped-char ::hex-escaped-char
-                     :backslash ::backslash
+                     :backslash (s/cat :slash-1 ::backslash :slash-2 ::backslash)
                      :quote ::quote
                      :plain-char char?))
 (s/def ::list-line (s/* (s/cat :item ::item)))
 
-(defn hex-escaped-char->char [hex-escaped-char]
-  (-> (str "0x" (hex-escaped-char :char-1) (hex-escaped-char :char-2))
-      edn/read-string
-      char))
-
-(defn process-list-line
-  [list-line]
-  (let [handle-line-item (fn [item]
-                           (let [[item-type item-contents] (first (vals item))]
-                             (if (= item-type :hex-escaped-char)
-                               (hex-escaped-char->char item-contents)
-                               item-contents)))]
-    (apply str (map handle-line-item list-line))))
-
-(s/fdef process-list-line
-  :args (s/cat :list-line ::list-line))
+(def list-lines (map #(s/conform ::list-line (vec %)) input))
 
 (defn in-memory-length [list-line]
-  (- (count list-line)
-     2))
+  (- (count list-line) 2))
 
 (defn code-length [list-line]
   (- (apply +
@@ -53,34 +37,13 @@
                  list-line))
      2))
 
+(def part-1
+  (let [total-code-length (apply + (map code-length list-lines))
+        total-in-memory-length (apply + (map in-memory-length list-lines))]
+    (- total-code-length total-in-memory-length)))
+
 (comment
-  (s/exercise ::hex-escaped-char 10)
+  part-1
 
-
-  (->> "\"\\x27\""
-       vec
-       (s/conform ::list-line)
-       code-length
-       )
-
-
-  (hex-escaped-char->char
-    {:backslash \\, :x \x, :char-1 \8, :char-2 \b}
-    )
-
-  (s/conform ::list-line (vec (first input)))
-
-  (process-list-line (s/conform ::list-line (vec (first input))))
-
-  (first input)
-
-  (val (ffirst
-         (s/conform ::list-line (vec "\"\\x27\""))))
-
-  (s/conform ::list-line (vec (first input)))
-
-
-  (identity 0x27)
-  (char 0x27)
-
+  (nth list-lines 4)
   )
