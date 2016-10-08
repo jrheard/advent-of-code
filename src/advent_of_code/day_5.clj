@@ -33,6 +33,8 @@
 (def part-1-nice-strings
   (filter part-1-nice? input))
 
+; crap this doesn't do what i thought it did
+
 (defn find-non-overlapping-pairs
   [a-str]
   ((reduce
@@ -54,31 +56,61 @@
   :args (s/cat :a-str string?)
   :ret (s/coll-of ::pair))
 
-(defn repetitions-with-one-in-the-middle [a-str])
+(defn contains-a-repetition-with-one-in-the-middle? [a-str]
+  (= (reduce (fn [buffer curr-char]
+               (if (< (count buffer) 3)
+                 (conj buffer curr-char)
+
+                 (let [new-buffer (conj (take 2 buffer) curr-char)]
+                   (if (and (= (first new-buffer)
+                               (last new-buffer))
+                            (not= (first new-buffer)
+                                  (second new-buffer)))
+                     (reduced true)
+                     new-buffer))))
+             []
+             a-str)
+     true))
 
 (defn part-2-nice? [a-str]
   (and
     (some #(> % 1)
-          (frequencies (find-non-overlapping-pairs a-str)))
-
-    )
-
-  )
+          (vals (frequencies (find-non-overlapping-pairs a-str))))
+    (contains-a-repetition-with-one-in-the-middle? a-str)))
 
 (stest/instrument)
 
 (comment
+  (count (filter contains-a-repetition-with-one-in-the-middle? input))
+  (count input)
+
+  (map frequencies (filter #(> (count %) 0) (map find-non-overlapping-pairs input)))
+
+
+  (find-non-overlapping-pairs "qjhvhtzxzqqjkmpb")
+
   (count part-1-nice-strings)
+
+  (count (filter part-2-nice? input))
+
+  (reductions (fn [buffer curr-char]
+               (if (< (count buffer) 3)
+                 (conj buffer curr-char)
+
+                 (let [new-buffer (conj (take 2 buffer) curr-char)]
+                   (if (and (= (first new-buffer)
+                               (last new-buffer))
+                            (not= (first new-buffer)
+                                  (second new-buffer)))
+                     (reduced true)
+                     new-buffer))))
+             []
+             "mfifrjamczjncuym")
 
   (nice?)
 
-  (frequencies
-    (find-non-overlapping-instances-of-pair "jfajjiewofejioawaajefiwofewooojwefjwejjwe"))
-
-  (filter vowels "ajiowfefawiofaweje")
-
-  (contains-adjoining-dupe? "abjkllafewa")
-
-  (contains-bad-substring? "afjwabeioa")
+  (-> []
+      (conj 3)
+      (conj 4))
 
   )
