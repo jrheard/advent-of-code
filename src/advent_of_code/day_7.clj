@@ -1,5 +1,6 @@
 (ns advent-of-code.day-7
   (:require [clojure.spec :as s]
+            [clojure.set :refer [difference]]
             [clojure.string :refer [split lower-case]]
             [clojure.pprint :refer [pprint]]))
 
@@ -9,13 +10,12 @@
 (s/def ::id string?)
 (s/def ::gate #{:and :or :not :lshift :rshift :identity})
 
-; ok working on depgraph first
-(s/def :dep/input (s/or :wire ::id
-                        :value ::signal))
-(s/def :dep/inputs (s/coll-of :dep/input))
-(s/def :dep/operation ::gate)
-(s/def :dep/output ::id)
-(s/def :dep/node (s/keys :req [:dep/inputs :dep/operation :dep/output]))
+(s/def ::input (s/or :wire ::id
+                     :value ::signal))
+(s/def ::inputs (s/coll-of ::input))
+(s/def ::operation ::gate)
+(s/def ::output ::id)
+(s/def ::instruction (s/keys :req [::inputs ::operation ::output]))
 
 (defn parse-instruction [instruction]
   (let [[input-str output-id] (split instruction #" -> ")
@@ -26,18 +26,47 @@
                                 [(second split-inputs)]]
                              3 [(-> split-inputs second lower-case keyword)
                                 [(first split-inputs) (last split-inputs)]])]
-    {:dep/output    output-id
-     :dep/inputs    (map (fn [input-str]
-                           (let [input (read-string input-str)]
-                             (if (number? input)
-                               input
-                               (str input))))
-                         inputs)
-     :dep/operation operation}))
+    {::output    output-id
+     ::inputs    (map (fn [input-str]
+                        (let [input (read-string input-str)]
+                          (if (number? input)
+                            input
+                            (str input))))
+                      inputs)
+     ::operation operation}))
+
+(s/fdef parse-instruction
+  :args (s/cat :instruction string?)
+  :ret ::instruction)
 
 (def instructions (map parse-instruction raw-instructions))
 
+(defn follow-instructions
+  [instructions]
+  (loop [wire-signals {}
+         instructions-ready-to-follow (filter #(every? int? (% ::inputs))
+                                              instructions)
+         instructions-with-unresolved-inputs (difference (set instructions)
+                                                         (set instructions-ready-to-follow))]
+    (if (seq instructions-ready-to-follow)
+      (let [instruction (first instructions-ready-to-follow)
+            output-value (run-instruction instruction wire-signals)
+            instructions-ready-to-follow (apply conj
+                                                instructions-ready-to-follow
+                                                (filter (fn [instruction]
+                                                          (every?
+                                                            #(or (number? %)
+                                                                 (contains? wire-signals %))
+                                                            (instruction ::inputs)))
+                                                        instructions-with-unresolved-inputs))]
+
+        (recur (assoc wire-signals (instruction ::output) output-value)
+               instructions-ready-to-follow
+               (difference instructions-with-unresolved-inputs instructions-ready-to-follow)))
+      wire-signals)))
+
 (comment
+
   (take 10 instructions)
 
   (str (read-string "x"))
@@ -45,11 +74,6 @@
   (split "lf AND lq -> ls" #" -> ")
 
   )
-
-
-(s/fdef parse-instruction
-  :args (s/cat :instruction string?)
-  :ret :dep/node)
 
 ; scratch area
 (s/def ::signal (s/and int? #(<= 0 % 65535)))
@@ -66,5 +90,9 @@
 (comment
   (take 1 (map first
                (s/exercise ::connection)))
+
+  (let [foo #{1 2 3}]
+    (apply conj foo [2 3 4])
+    )
 
   )
