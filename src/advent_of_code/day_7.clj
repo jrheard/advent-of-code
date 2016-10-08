@@ -42,9 +42,11 @@
 (def instructions (map parse-instruction raw-instructions))
 
 (defn -resolve-signal [val-or-identifier wire-signals]
-  (cond
-    (number? val-or-identifier) val-or-identifier
-    (contains? wire-signals val-or-identifier) (wire-signals val-or-identifier)))
+  (if (= val-or-identifier "b")
+    16076
+    (cond
+      (number? val-or-identifier) val-or-identifier
+      (contains? wire-signals val-or-identifier) (wire-signals val-or-identifier))))
 
 (def signal-implementations
   {:identity identity
@@ -104,27 +106,4 @@
   (str (read-string "x"))
 
   (split "lf AND lq -> ls" #" -> ")
-
-  )
-
-; scratch area
-(s/def ::signal (s/and int? #(<= 0 % 65535)))
-(s/def ::wire (s/keys :req [::id ::signal]))
-
-(s/def ::inputs (s/coll-of (s/or :wire ::wire
-                                 :value int?)))
-(s/def ::output ::wire)
-(s/def ::connection (s/keys :req [::inputs ::output]
-                            :opt [::gate]))
-
-
-
-(comment
-  (take 1 (map first
-               (s/exercise ::connection)))
-
-  (let [foo #{1 2 3}]
-    (apply conj foo [2 3 4])
-    )
-
   )
