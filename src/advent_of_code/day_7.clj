@@ -46,16 +46,23 @@
     (number? val-or-identifier) val-or-identifier
     (contains? wire-signals val-or-identifier) (wire-signals val-or-identifier)))
 
-(defmulti run-instruction
-          (fn
-            [instruction wire-signals]
-            (instruction ::operation)))
+(def signal-implementations
+  {:identity identity
+   :not      bit-not
+   :and      bit-and
+   :or       bit-or
+   :lshift   bit-shift-left
+   :rshift   bit-shift-right})
 
-(defmethod run-instruction :identity
+(defn run-instruction
   [instruction wire-signals]
-  (-resolve-signal (first (instruction ::inputs)) wire-signals))
-
-(defmethod run-instruction :)
+  (assert (contains? signal-implementations (instruction ::operation)))
+  (let [inputs (map #(-resolve-signal % wire-signals)
+                    (instruction ::inputs))]
+    (mod
+      (apply (signal-implementations (instruction ::operation))
+             inputs)
+      65536)))
 
 (defn follow-instructions
   [instructions]
@@ -66,10 +73,11 @@
                                                          (set instructions-ready-to-follow))]
     (if (seq instructions-ready-to-follow)
       (let [instruction (first instructions-ready-to-follow)
+            _ (println "processing" instruction)
             output-value (run-instruction instruction wire-signals)
             wire-signals (assoc wire-signals (instruction ::output) output-value)
             instructions-ready-to-follow (apply conj
-                                                instructions-ready-to-follow
+                                                (rest instructions-ready-to-follow)
                                                 (filter (fn [instruction]
                                                           (every?
                                                             #(or (number? %)
@@ -82,9 +90,16 @@
       wire-signals)))
 
 (comment
-  (+ 65536 (bit-not 123))
+  ((follow-instructions instructions) "a")
+
+  (mod (bit-not 123)
+       65536)
+
+  (+ 65536 (bit-not 456))
 
   (take 10 instructions)
+
+  (filter #(= (% ::operation) :identity) instructions)
 
   (str (read-string "x"))
 
