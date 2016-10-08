@@ -17,6 +17,8 @@
 (s/def ::output ::id)
 (s/def ::instruction (s/keys :req [::inputs ::operation ::output]))
 
+; borkdude accomplishes this much more cleverly in https://clojurians.slack.com/files/borkdude/F2LUCEBMG/day7_clj.clj
+; s/conform is perfect here, dang
 (defn parse-instruction [instruction]
   (let [[input-str output-id] (split instruction #" -> ")
         split-inputs (split input-str #" ")
