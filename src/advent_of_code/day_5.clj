@@ -33,28 +33,22 @@
 (def part-1-nice-strings
   (filter part-1-nice? input))
 
-; crap this doesn't do what i thought it did
+(defn pieces [a-str]
+  (for [i (range (count a-str))]
+    [(take i a-str) (drop i a-str)]))
 
-(defn find-non-overlapping-pairs
+(defn contains-a-non-overlapping-pair?
   [a-str]
-  ((reduce
-     (fn [state curr-char]
-       (if (= (state :last-char) curr-char)
-         {:instances (conj (state :instances)
-                           (repeat 2 curr-char))
-          :last-char nil}
-         (assoc state :last-char curr-char)))
-
-     {:instances []
-      :last-char nil}
-
-     a-str) :instances))
+  (some
+    (fn [[first-piece second-piece]]
+      (.contains (apply str second-piece)
+                 (apply str (take-last 2 first-piece))))
+    (drop 2 (pieces a-str))))
 
 (s/def ::pair (s/tuple char? char?))
 
-(s/fdef find-non-overlapping-pairs
-  :args (s/cat :a-str string?)
-  :ret (s/coll-of ::pair))
+(s/fdef contains-a-non-overlapping-pair?
+  :args (s/cat :a-str string?))
 
 (defn contains-a-repetition-with-one-in-the-middle? [a-str]
   (= (reduce (fn [buffer curr-char]
@@ -74,43 +68,13 @@
 
 (defn part-2-nice? [a-str]
   (and
-    (some #(> % 1)
-          (vals (frequencies (find-non-overlapping-pairs a-str))))
+    (contains-a-non-overlapping-pair? a-str)
     (contains-a-repetition-with-one-in-the-middle? a-str)))
 
 (stest/instrument)
 
 (comment
-  (count (filter contains-a-repetition-with-one-in-the-middle? input))
-  (count input)
-
-  (map frequencies (filter #(> (count %) 0) (map find-non-overlapping-pairs input)))
-
-
-  (find-non-overlapping-pairs "qjhvhtzxzqqjkmpb")
-
   (count part-1-nice-strings)
 
   (count (filter part-2-nice? input))
-
-  (reductions (fn [buffer curr-char]
-               (if (< (count buffer) 3)
-                 (conj buffer curr-char)
-
-                 (let [new-buffer (conj (take 2 buffer) curr-char)]
-                   (if (and (= (first new-buffer)
-                               (last new-buffer))
-                            (not= (first new-buffer)
-                                  (second new-buffer)))
-                     (reduced true)
-                     new-buffer))))
-             []
-             "mfifrjamczjncuym")
-
-  (nice?)
-
-  (-> []
-      (conj 3)
-      (conj 4))
-
   )
