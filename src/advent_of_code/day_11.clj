@@ -1,6 +1,5 @@
 (ns advent-of-code.day-11
-  (:require [advent-of-code.day-5 :refer [contains-a-non-overlapping-pair?]]
-            [clojure.spec :as s]
+  (:require [clojure.spec :as s]
             [clojure.string :refer [split]]))
 
 ; started with a spec implementation, but it was waaaay too slow :'(
@@ -35,6 +34,8 @@
                          ::password-with-straight
                          ::password-with-two-pairs))
 
+; faster implementation below
+
 (def input "hepxcrrq")
 
 (defn increment-pass
@@ -50,22 +51,25 @@
   (map #(apply str %) (partition 3 1 (map char (range 97 123)))))
 
 (def straights-re
-  (re-pattern (apply str (interleave straights (repeat "|")))))
+  (re-pattern (apply str (drop-last 1 (interleave straights (repeat "|"))))))
+
+(defn contains-a-non-overlapping-pair?
+  [password]
+  (let [pairs (map first (re-seq #"(.)\1" password))]
+    (some #(> % 1)
+          (vals
+            (frequencies pairs)))))
 
 (defn fast-valid-password?
   [password]
   (and
     (re-seq straights-re password)
     (not (re-seq #"[iol]" password))
-
-    ;; this function is buggy
     (contains-a-non-overlapping-pair? password)
-
     (= (count password) 8)))
 
 (defn find-next-password
   [password]
-  (println password)
   ; turn into vec in increment, then back into string
   (let [new-pass (apply str (increment-pass (vec password)))]
     (if (fast-valid-password? new-pass)
@@ -73,11 +77,17 @@
       (recur new-pass))))
 
 (comment
+  (find-next-password input)
+
+  (apply str (drop-last 1 (interleave straights (repeat "|"))))
+
   straights
 
-  (contains-a-non-overlapping-pair? "abcdegab")
+  (re-seq straights-re "hepxdddd")
 
-  (find-next-password "abcdefgh")
+  (map first (re-seq #"(.)\1" "iaaaajafewoofae"))
+
+  (contains-a-non-overlapping-pair? "jfaaaiweofeaow")
 
   (apply str (interleave straights (repeat "|")))
 
