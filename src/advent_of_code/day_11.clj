@@ -6,6 +6,19 @@
                        #(re-seq #"[a-z]" (str %))))
 (s/def ::password (s/coll-of ::letter :count 8))
 
+(s/def ::straight (s/& (s/cat :first ::letter
+                              :second ::letter
+                              :third ::letter)
+                       #(and (= (int (% :first))
+                                (dec (int (% :second))))
+                             (= (int (% :second))
+                                (dec (int (% :third)))))))
+
+(s/def ::password-with-straight (s/cat :some-letters (s/* ::letter)
+                                       :straight ::straight
+                                       :some-other-letters (s/* ::letter)))
+
+
 (def input (vec "hepxcrrq"))
 
 (defn increment-pass
@@ -34,6 +47,7 @@
          (conj [\a \b \c] (char (inc (int \d))))
          )
 
+  (s/valid? ::password-with-straight (vec "hijklmmn"))
 
 
   (apply str \a [\b \c \d])
