@@ -56,9 +56,7 @@
 (defn contains-a-non-overlapping-pair?
   [password]
   (let [pairs (map first (re-seq #"(.)\1" password))]
-    (some #(> % 1)
-          (vals
-            (frequencies pairs)))))
+    (> (count (set pairs)) 1)))
 
 (defn fast-valid-password?
   [password]
@@ -70,7 +68,6 @@
 
 (defn find-next-password
   [password]
-  ; turn into vec in increment, then back into string
   (let [new-pass (apply str (increment-pass (vec password)))]
     (if (fast-valid-password? new-pass)
       new-pass
@@ -78,6 +75,8 @@
 
 (comment
   (find-next-password input)
+
+  (contains-a-non-overlapping-pair? "abcdffaa")
 
   (apply str (drop-last 1 (interleave straights (repeat "|"))))
 
