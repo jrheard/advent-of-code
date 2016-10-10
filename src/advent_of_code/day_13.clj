@@ -25,6 +25,16 @@
 
 (def instructions (map parse-instruction input))
 
+(def all-other-people (set (map ::person instructions)))
+
+(def instructions-incliuding-yours
+  (apply conj
+         instructions
+         (mapcat (fn [person]
+                   [{::person "You" ::change-type :gain ::happiness 0 ::other-person person}
+                    {::person person ::change-type :gain ::happiness 0 ::other-person "You"}])
+                 all-other-people)))
+
 (def happiness-change-by-pair
   (into {}
         (map (fn [instruction]
@@ -32,13 +42,10 @@
                 (if (= (instruction ::change-type) :gain)
                   (instruction ::happiness)
                   (- (instruction ::happiness)))]))
-        instructions))
+        instructions-incliuding-yours))
 
 (def all-possible-arrangements
-  (->> instructions
-       (map ::person)
-       set
-       permutations))
+  (permutations (conj all-other-people "You")))
 
 (defn happiness-changes-for-arrangement
   [arrangement]
@@ -63,10 +70,10 @@
 
 (comment
   (apply max
-    (map (fn [arrangement]
-           (apply +
-                  (happiness-changes-for-arrangement arrangement)))
-         all-possible-arrangements))
+         (map (fn [arrangement]
+                (apply +
+                       (happiness-changes-for-arrangement arrangement)))
+              all-possible-arrangements))
 
   (second all-possible-arrangements)
   (happiness-changes-for-arrangement (nth all-possible-arrangements 4))
