@@ -33,29 +33,37 @@
          {::reindeer           reindeer
           ::state              :flying
           ::current-state-time 0
+          ::points             0
           ::distance           0})
        reindeers))
 
 (defn race-tick [race]
-  (map (fn [competitor]
-         (condp = (competitor ::state)
-           :flying (if (< (competitor ::current-state-time)
-                          (get-in competitor [::reindeer ::flight-time]))
-                     (-> competitor
-                         (update-in [::distance] + (get-in competitor [::reindeer ::speed]))
-                         (update-in [::current-state-time] inc))
-                     (-> competitor
-                         (assoc ::state :resting)
-                         (assoc ::current-state-time 1)))
+  (let [new-race (map (fn [competitor]
+                        (condp = (competitor ::state)
+                          :flying (if (< (competitor ::current-state-time)
+                                         (get-in competitor [::reindeer ::flight-time]))
+                                    (-> competitor
+                                        (update-in [::distance] + (get-in competitor [::reindeer ::speed]))
+                                        (update-in [::current-state-time] inc))
+                                    (-> competitor
+                                        (assoc ::state :resting)
+                                        (assoc ::current-state-time 1)))
 
-           :resting (if (< (competitor ::current-state-time)
-                           (get-in competitor [::reindeer ::rest-time]))
-                      (update-in competitor [::current-state-time] inc)
-                      (-> competitor
-                          (assoc ::state :flying)
-                          (assoc ::current-state-time 1)
-                          (update-in [::distance] + (get-in competitor [::reindeer ::speed]))))))
-       race))
+                          :resting (if (< (competitor ::current-state-time)
+                                          (get-in competitor [::reindeer ::rest-time]))
+                                     (update-in competitor [::current-state-time] inc)
+                                     (-> competitor
+                                         (assoc ::state :flying)
+                                         (assoc ::current-state-time 1)
+                                         (update-in [::distance] + (get-in competitor [::reindeer ::speed]))))))
+                      race)
+        max-distance (apply max (map ::distance new-race))]
+
+    (map (fn [competitor]
+           (if (= (competitor ::distance) max-distance)
+             (update competitor ::points inc)
+             competitor))
+         new-race)))
 
 (defn run-race [reindeers num-seconds]
   (let [race (make-race reindeers)]
@@ -66,7 +74,7 @@
 (comment
   (as-> reindeers $
         (run-race $ 2503)
-        (map ::distance $)
+        (map ::points $)
         (apply max $))
 
   (run-race reindeers 1)
