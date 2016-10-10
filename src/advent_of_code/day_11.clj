@@ -74,7 +74,7 @@
       (recur new-pass))))
 
 (comment
-  (find-next-password input)
+  (find-next-password (find-next-password input))
 
   (contains-a-non-overlapping-pair? "abcdffaa")
 
