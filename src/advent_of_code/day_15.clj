@@ -43,19 +43,23 @@
                     0)))
               #{::capacity ::durability ::flavor ::texture})))
 
-(defn part-1
+(defn part-2
   []
   (apply max (for [ingredient-amounts (selections (range 101) (count ingredients))
-                   :when (= (apply + ingredient-amounts)
-                            100)]
+                   :when (and (= (apply + ingredient-amounts)
+                                 100)
+
+                              (= (apply + (map (fn [ingredient amount]
+                                                 (* (ingredient ::calories) amount))
+                                               ingredients
+                                               ingredient-amounts))
+                                 500))]
                (score (map vector
                            ingredients
                            ingredient-amounts)))))
 
 
 (comment
-  (part-1)
-
-
+  (part-2)
 
   )
