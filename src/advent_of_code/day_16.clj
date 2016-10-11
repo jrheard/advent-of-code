@@ -32,7 +32,10 @@
 (comment
   (reduce (fn [_ sue]
             (when (every? (fn [[k v]]
-                            (= (culprit k) v))
+                            (cond
+                              (#{:cats :trees} k) (> v (culprit k))
+                              (#{:pomeranians :goldfish} k) (< v (culprit k))
+                              :else (= v (culprit k))))
                           (dissoc sue :id))
               (reduced sue)))
           all-sues)
